@@ -106,7 +106,7 @@ def estimate_funding_requirements(pipeline_cash_flows, phase_costs):
 #          STREAMLIT APP
 # --------------------------------------
 def main():
-    st.title("📈 Biotech Startup Pipeline NPV Tool 🧬")
+    st.title("📈 Pharmagellan Based Biotech Startup Pipeline NPV Tool 🧬")
 
     with st.expander("Disclaimer"):
         st.write(
