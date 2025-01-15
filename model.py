@@ -8,6 +8,7 @@ DEFAULT_DISCOUNT_RATE = 0.15  # Adjusted for startup biotech firms
 
 # Phase success probabilities
 PHASE_PROBABILITIES = {
+    "Preclinical": 0.33,
     "Phase 1": 0.6,
     "Phase 2": 0.36,
     "Phase 3": 0.63
@@ -15,14 +16,28 @@ PHASE_PROBABILITIES = {
 
 # Rare disease probabilities
 RARE_DISEASE_PHASE_PROBABILITIES = {
+    "Preclinical": 0.4,
     "Phase 1": 0.7,
     "Phase 2": 0.45,
     "Phase 3": 0.8
 }
 
+# Clinical development costs based on Pharmagellan
+CLINICAL_DEVELOPMENT_COSTS = {
+    "Preclinical": 30e6,  # $10-50M range
+    "Phase 1": 10e6,      # $2-20M range
+    "Phase 2": 50e6,      # $10-100M range
+    "Phase 3": 150e6      # $50-300M range
+}
+
 # Pricing adjustments
 EX_U_S_PRICE_FACTOR = 0.5  # Normalization factor for non-U.S. prices
 ANNUAL_PRICE_INCREASE = 0.02  # Conservative annual increase
+
+# Timeframes for revenue modeling
+DEFAULT_RAMP_YEARS = 6
+DEFAULT_PEAK_YEARS = 7
+DEFAULT_DECLINE_YEARS = 8
 
 # --------------------------------------
 #          HELPER FUNCTIONS
@@ -74,11 +89,18 @@ def simulate_pipeline_cash_flows(
     return cash_flows
 
 
-def estimate_funding_requirements(pipeline_cash_flows):
+def estimate_funding_requirements(pipeline_cash_flows, phase_costs):
     """
-    Estimates the total funding required based on the cash flow projections.
+    Estimates the total funding required based on the cash flow projections, broken down by development phase.
     """
-    return abs(sum(cf for cf in pipeline_cash_flows if cf < 0))
+    pre_revenue_cash_flows = [cf for cf in pipeline_cash_flows if cf < 0]
+    breakdown = {
+        phase: phase_costs[phase] for phase in phase_costs
+    }
+    return {
+        "total_funding": sum(breakdown.values()),
+        "breakdown": breakdown
+    }
 
 # --------------------------------------
 #          STREAMLIT APP
@@ -154,7 +176,7 @@ def main():
                 f"Years to Reach Peak Revenue for Asset {i+1}:",
                 min_value=1,
                 max_value=10,
-                value=5,
+                value=DEFAULT_RAMP_YEARS,
                 key=f"ramp_{i}",
                 help="Time needed to achieve peak sales."
             )
@@ -163,7 +185,7 @@ def main():
                 f"Years at Peak Revenue for Asset {i+1}:",
                 min_value=1,
                 max_value=10,
-                value=5,
+                value=DEFAULT_PEAK_YEARS,
                 key=f"peak_{i}",
                 help="Duration of peak revenue."
             )
@@ -172,7 +194,7 @@ def main():
                 f"Years of Revenue Decline for Asset {i+1}:",
                 min_value=1,
                 max_value=20,
-                value=10,
+                value=DEFAULT_DECLINE_YEARS,
                 key=f"decline_{i}",
                 help="Number of years revenue decreases after peak."
             )
@@ -202,12 +224,15 @@ def main():
         pipeline_cash_flows.extend(risk_adjusted_cash_flows)
 
     npv_pipeline = calculate_npv(pipeline_cash_flows, DEFAULT_DISCOUNT_RATE)
-    funding_requirements = estimate_funding_requirements(pipeline_cash_flows)
+    funding_requirements = estimate_funding_requirements(pipeline_cash_flows, CLINICAL_DEVELOPMENT_COSTS)
     roi = calculate_roi(npv_pipeline, total_investment)
 
     st.subheader("Valuation Results")
     st.write(f"NPV of Pipeline: ${npv_pipeline:,.2f}")
-    st.write(f"Total Funding Requirements: ${funding_requirements:,.2f}")
+    st.write(f"Total Funding Requirements: ${funding_requirements['total_funding']:,.2f}")
+    st.write("Funding Breakdown by Phase:")
+    for phase, amount in funding_requirements['breakdown'].items():
+        st.write(f"  {phase}: ${amount:,.2f}")
     st.write(f"Return on Investment (ROI): {roi:.2f}%")
 
 if __name__ == "__main__":
