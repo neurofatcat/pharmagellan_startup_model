@@ -49,11 +49,11 @@ def calculate_npv(cash_flows: list, discount_rate: float) -> float:
     return sum(cf / ((1 + discount_rate) ** t) for t, cf in enumerate(cash_flows, start=1))
 
 
-def calculate_roi(npv: float, total_investment: float) -> float:
+def calculate_roi(npv: float, user_investment: float) -> float:
     """
-    Calculates the Return on Investment (ROI).
+    Calculates the Return on Investment (ROI) based on user-provided investment.
     """
-    return (npv - total_investment) / total_investment * 100 if total_investment > 0 else float('nan')
+    return (npv - user_investment) / user_investment * 100 if user_investment > 0 else float('nan')
 
 
 def calculate_revenue_curve(eligible_population, price_per_patient, market_penetration, ramp_years, peak_years, decline_years, decline_rate):
@@ -120,7 +120,6 @@ def main():
     num_assets = st.number_input("Number of Pipeline Assets:", min_value=1, max_value=10, value=1, step=1)
 
     pipeline_cash_flows = []
-    total_investment = 0
 
     for i in range(num_assets):
         st.write(f"**Pipeline Asset {i+1}**")
@@ -219,13 +218,13 @@ def main():
             decline_rate=decline_rate
         )
 
-        total_investment += abs(sum(cf for cf in cash_flows if cf < 0))
         risk_adjusted_cash_flows = [cf * phase_probability for cf in cash_flows]
         pipeline_cash_flows.extend(risk_adjusted_cash_flows)
 
     npv_pipeline = calculate_npv(pipeline_cash_flows, DEFAULT_DISCOUNT_RATE)
+    user_investment = st.number_input("Enter your investment amount (USD):", min_value=0.0, value=0.0, step=1e6)
     funding_requirements = estimate_funding_requirements(pipeline_cash_flows, CLINICAL_DEVELOPMENT_COSTS)
-    roi = calculate_roi(npv_pipeline, total_investment)
+    roi = calculate_roi(npv_pipeline, user_investment)
 
     st.subheader("Valuation Results")
     st.write(f"NPV of Pipeline: ${npv_pipeline:,.2f}")
