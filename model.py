@@ -234,5 +234,19 @@ def main():
         st.write(f"  {phase}: ${amount:,.2f}")
     st.write(f"Return on Investment (ROI): {roi:.2f}%")
 
+# Add a "Buy Me a Coffee" button
+    st.markdown(
+        """
+        <div style="text-align: center; margin-top: 50px;">
+            <a href="https://www.buymeacoffee.com/cdmccann239" target="_blank">
+                <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" 
+                alt="Buy Me a Coffee" 
+                style="height: 60px; width: 217px;">
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 if __name__ == "__main__":
     main()
